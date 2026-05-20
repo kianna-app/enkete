@@ -94,23 +94,73 @@ export class SupabaseService {
       throw pollError;
     }
 
-    const { data: items, error: itemsError } = await client
-      .from('poll_items')
-      .select('*')
-      .eq('poll_id', id)
-      .order('created_at', { ascending: true });
-
-    if (itemsError) {
-      throw itemsError;
-    }
+    const items = await this.listItems(id);
 
     const answers = await this.listAnswers(id);
 
     return {
       poll,
-      items: items ?? [],
+      items,
       answers
     };
+  }
+
+  async listItems(pollId: string): Promise<PollItem[]> {
+    const client = this.getClient();
+
+    const { data, error } = await client
+      .from('poll_items')
+      .select('*')
+      .eq('poll_id', pollId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
+  }
+
+  async addPollItems(pollId: string, itemNames: string[]): Promise<PollItem[]> {
+    const client = this.getClient();
+    const items = itemNames.map((name) => ({
+      poll_id: pollId,
+      name
+    }));
+
+    const { error } = await client.from('poll_items').insert(items);
+
+    if (error) {
+      throw error;
+    }
+
+    return this.listItems(pollId);
+  }
+
+  async deletePollItem(pollId: string, itemId: string): Promise<PollItem[]> {
+    const client = this.getClient();
+
+    const { count, error: countError } = await client
+      .from('poll_answers')
+      .select('id', { count: 'exact', head: true })
+      .eq('poll_id', pollId)
+      .eq('poll_item_id', itemId);
+
+    if (countError) {
+      throw countError;
+    }
+
+    if ((count ?? 0) > 0) {
+      throw new Error('Este item já recebeu voto e não pode ser excluído.');
+    }
+
+    const { error } = await client.from('poll_items').delete().eq('poll_id', pollId).eq('id', itemId);
+
+    if (error) {
+      throw error;
+    }
+
+    return this.listItems(pollId);
   }
 
   async listAnswers(pollId: string): Promise<PollAnswer[]> {
@@ -167,6 +217,31 @@ export class SupabaseService {
           event: '*',
           schema: 'public',
           table: 'poll_answers',
+          filter: `poll_id=eq.${pollId}`
+        },
+        onChange
+      )
+      .subscribe();
+
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }
+
+  subscribeToItems(pollId: string, onChange: () => void): () => void {
+    if (!this.hasConfig()) {
+      return () => undefined;
+    }
+
+    const client = this.getClient();
+    const channel = client
+      .channel(`poll_items_${pollId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'poll_items',
           filter: `poll_id=eq.${pollId}`
         },
         onChange

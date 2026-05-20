@@ -63,6 +63,89 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
             </div>
           </header>
 
+          <section class="mb-3 overflow-hidden rounded-lg border border-gray-200/80 bg-white shadow-sm shadow-gray-200/50">
+            <button
+              class="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition active:bg-gray-50"
+              type="button"
+              [attr.aria-expanded]="editingItems()"
+              aria-controls="poll-item-editor"
+              (click)="toggleItemEditor()"
+            >
+              <span>
+                <span class="block text-sm font-semibold text-gray-800">Editar itens</span>
+                <span class="mt-0.5 block text-xs font-medium text-gray-500">Adicione opções faltantes</span>
+              </span>
+              <svg
+                class="h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200"
+                [class.rotate-180]="editingItems()"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.25"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+
+            @if (editingItems()) {
+              <div id="poll-item-editor" class="border-t border-gray-200/80 px-4 pb-4 pt-3">
+                <form class="flex gap-2" (ngSubmit)="addMissingItems()">
+                  <input
+                    class="min-w-0 flex-1 rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
+                    name="new-item-name"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Novo item"
+                    [ngModel]="newItemName()"
+                    (ngModelChange)="newItemName.set($event)"
+                  />
+                  <button
+                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#007aff] text-white shadow-sm shadow-[#007aff]/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+                    type="submit"
+                    aria-label="Adicionar item"
+                    [disabled]="!canAddItem() || editingSaving()"
+                  >
+                    <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                      <path d="M12 5v14" />
+                      <path d="M5 12h14" />
+                    </svg>
+                  </button>
+                </form>
+
+                <div class="mt-3 space-y-2">
+                  @for (item of items(); track item.id) {
+                    <div class="flex min-h-12 items-center gap-3 rounded-lg bg-gray-100 px-4 py-2.5">
+                      <span class="min-w-0 flex-1 text-sm font-semibold text-gray-900">{{ item.name }}</span>
+                      @if (voteCount(item.id) > 0) {
+                        <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-500">{{ voteCount(item.id) }}</span>
+                      }
+                      <button
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-gray-500 transition active:scale-[0.98] active:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-35"
+                        type="button"
+                        aria-label="Remover item"
+                        [disabled]="!canDeleteItem(item.id) || editingSaving()"
+                        (click)="deleteItem(item.id)"
+                      >
+                        <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4h8v2" />
+                          <path d="M6 6l1 15h10l1-15" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                        </svg>
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                @if (editError()) {
+                  <p class="mt-3 rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{{ editError() }}</p>
+                }
+              </div>
+            }
+          </section>
+
           <section class="rounded-lg border border-gray-200/80 bg-white p-4 shadow-sm shadow-gray-200/50">
             @if (alreadyVoted()) {
               <div class="rounded-lg bg-[#007aff]/10 px-4 py-3 text-sm font-semibold text-[#0062cc]">
@@ -193,7 +276,8 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
 export class PollPageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly supabase = inject(SupabaseService);
-  private unsubscribe: (() => void) | undefined;
+  private unsubscribeAnswers: (() => void) | undefined;
+  private unsubscribeItems: (() => void) | undefined;
   private actionMessageTimeout: ReturnType<typeof setTimeout> | undefined;
 
   readonly poll = signal<Poll | null>(null);
@@ -204,8 +288,12 @@ export class PollPageComponent implements OnInit, OnDestroy {
   readonly saving = signal(false);
   readonly error = signal('');
   readonly voteError = signal('');
+  readonly editError = signal('');
   readonly actionMessage = signal('');
   readonly alreadyVoted = signal(false);
+  readonly editingItems = signal(false);
+  readonly editingSaving = signal(false);
+  readonly newItemName = signal('');
 
   readonly results = computed(() => this.supabase.buildResults(this.items(), this.supabase.answers()));
   readonly sortedResults = computed(() => {
@@ -221,13 +309,15 @@ export class PollPageComponent implements OnInit, OnDestroy {
   readonly canVote = computed(() => {
     return this.selectedItemIds().length > 0 && this.personName().trim().length > 0 && !this.alreadyVoted();
   });
+  readonly canAddItem = computed(() => this.cleanNewItemNames().length > 0);
 
   async ngOnInit(): Promise<void> {
     await this.loadPoll();
   }
 
   ngOnDestroy(): void {
-    this.unsubscribe?.();
+    this.unsubscribeAnswers?.();
+    this.unsubscribeItems?.();
     clearTimeout(this.actionMessageTimeout);
   }
 
@@ -257,6 +347,16 @@ export class PollPageComponent implements OnInit, OnDestroy {
 
     if (pollId) {
       await this.supabase.listAnswers(pollId);
+    }
+  }
+
+  async refreshItems(): Promise<void> {
+    const pollId = this.poll()?.id;
+
+    if (pollId) {
+      const items = await this.supabase.listItems(pollId);
+      this.items.set(items);
+      this.selectedItemIds.update((itemIds) => itemIds.filter((itemId) => items.some((item) => item.id === itemId)));
     }
   }
 
@@ -313,6 +413,64 @@ export class PollPageComponent implements OnInit, OnDestroy {
     return this.selectedItemIds().includes(itemId);
   }
 
+  toggleItemEditor(): void {
+    this.editingItems.update((isEditing) => !isEditing);
+    this.editError.set('');
+  }
+
+  async addMissingItems(): Promise<void> {
+    const pollId = this.poll()?.id;
+    const itemNames = this.cleanNewItemNames();
+
+    if (!pollId || itemNames.length === 0) {
+      return;
+    }
+
+    this.editingSaving.set(true);
+    this.editError.set('');
+
+    try {
+      const items = await this.supabase.addPollItems(pollId, itemNames);
+      this.items.set(items);
+      this.newItemName.set('');
+      this.showActionMessage(itemNames.length === 1 ? 'Item adicionado' : 'Itens adicionados');
+    } catch (error) {
+      this.editError.set(error instanceof Error ? error.message : 'Não foi possível adicionar o item.');
+    } finally {
+      this.editingSaving.set(false);
+    }
+  }
+
+  async deleteItem(itemId: string): Promise<void> {
+    const pollId = this.poll()?.id;
+
+    if (!pollId || !this.canDeleteItem(itemId)) {
+      return;
+    }
+
+    this.editingSaving.set(true);
+    this.editError.set('');
+
+    try {
+      const items = await this.supabase.deletePollItem(pollId, itemId);
+      this.items.set(items);
+      this.selectedItemIds.update((itemIds) => itemIds.filter((selectedItemId) => selectedItemId !== itemId));
+      this.showActionMessage('Item removido');
+    } catch (error) {
+      this.editError.set(error instanceof Error ? error.message : 'Não foi possível remover o item.');
+    } finally {
+      this.editingSaving.set(false);
+    }
+  }
+
+  canDeleteItem(itemId: string): boolean {
+    return this.items().length > 1 && this.voteCount(itemId) === 0;
+  }
+
+  voteCount(itemId: string): number {
+    return this.supabase.answers().filter((answer) => answer.poll_item_id === itemId).length;
+  }
+
   private async loadPoll(): Promise<void> {
     const pollId = this.route.snapshot.paramMap.get('id');
 
@@ -327,8 +485,11 @@ export class PollPageComponent implements OnInit, OnDestroy {
       this.poll.set(details.poll);
       this.items.set(details.items);
       this.alreadyVoted.set(localStorage.getItem(this.votedKey(pollId)) === 'true');
-      this.unsubscribe = this.supabase.subscribeToAnswers(pollId, () => {
+      this.unsubscribeAnswers = this.supabase.subscribeToAnswers(pollId, () => {
         void this.refreshAnswers();
+      });
+      this.unsubscribeItems = this.supabase.subscribeToItems(pollId, () => {
+        void this.refreshItems();
       });
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'Enquete não encontrada.');
@@ -381,6 +542,17 @@ export class PollPageComponent implements OnInit, OnDestroy {
   private clearActionMessage(): void {
     clearTimeout(this.actionMessageTimeout);
     this.actionMessage.set('');
+  }
+
+  private cleanNewItemNames(): string[] {
+    const existingNames = new Set(this.items().map((item) => item.name.trim().toLowerCase()));
+
+    return this.newItemName()
+      .split(',')
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .filter((name, index, names) => names.findIndex((currentName) => currentName.toLowerCase() === name.toLowerCase()) === index)
+      .filter((name) => !existingNames.has(name.toLowerCase()));
   }
 
   private resultsSummary(): string {
