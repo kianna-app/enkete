@@ -53,34 +53,62 @@ import { SupabaseService } from '../../services/supabase.service';
             />
           </label>
 
-          <label class="mt-4 block">
-            <span class="text-sm font-semibold text-gray-700">Subtítulo opcional</span>
-            <input
-              class="mt-2 w-full rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
-              name="subtitle"
-              type="text"
-              autocomplete="off"
-              placeholder="Combine os itens da festa"
-              [ngModel]="subtitle()"
-              (ngModelChange)="subtitle.set($event)"
-            />
-          </label>
-
-          <div class="mt-5 rounded-lg bg-gray-100 px-4 py-3">
-            <label class="flex items-start gap-3">
-              <input
-                class="mt-0.5 h-5 w-5 accent-[#007aff]"
-                name="allow-multiple-answers"
-                type="checkbox"
-                [ngModel]="allowMultipleAnswers()"
-                (ngModelChange)="allowMultipleAnswers.set($event)"
-              />
+          <section class="mt-4 overflow-hidden rounded-lg border border-gray-200/80 bg-white">
+            <button
+              class="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition active:bg-gray-50"
+              type="button"
+              [attr.aria-expanded]="showAdvancedOptions()"
+              aria-controls="advanced-options"
+              (click)="toggleAdvancedOptions()"
+            >
               <span>
-                <span class="block text-sm font-semibold text-gray-800">Permitir múltiplas respostas</span>
-                <span class="mt-0.5 block text-sm font-medium leading-snug text-gray-500">Cada pessoa poderá escolher mais de um item.</span>
+                <span class="block text-sm font-semibold text-gray-800">Opções</span>
+                <span class="mt-0.5 block text-xs font-medium text-gray-500">Subtítulo e respostas múltiplas</span>
               </span>
-            </label>
-          </div>
+              <svg
+                class="h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200"
+                [class.rotate-180]="showAdvancedOptions()"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.25"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+
+            @if (showAdvancedOptions()) {
+              <div id="advanced-options" class="border-t border-gray-200/80 px-4 pb-4 pt-3">
+                <label class="block">
+                  <span class="text-sm font-semibold text-gray-700">Subtítulo opcional</span>
+                  <input
+                    class="mt-2 w-full rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
+                    name="subtitle"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Combine os itens da festa"
+                    [ngModel]="subtitle()"
+                    (ngModelChange)="subtitle.set($event)"
+                  />
+                </label>
+
+                <label class="mt-4 flex items-start gap-3 rounded-lg bg-gray-100 px-4 py-3">
+                  <input
+                    class="mt-0.5 h-5 w-5 accent-[#007aff]"
+                    name="allow-multiple-answers"
+                    type="checkbox"
+                    [ngModel]="allowMultipleAnswers()"
+                    (ngModelChange)="allowMultipleAnswers.set($event)"
+                  />
+                  <span>
+                    <span class="block text-sm font-semibold text-gray-800">Permitir múltiplas respostas</span>
+                    <span class="mt-0.5 block text-sm font-medium leading-snug text-gray-500">Cada pessoa poderá escolher mais de um item.</span>
+                  </span>
+                </label>
+              </div>
+            }
+          </section>
 
           <div class="mt-5">
             <div class="mb-2">
@@ -169,6 +197,7 @@ export class HomePageComponent {
   readonly allowMultipleAnswers = signal(false);
   readonly items = signal([{ id: crypto.randomUUID(), name: '' }]);
   readonly showInfo = signal(false);
+  readonly showAdvancedOptions = signal(false);
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -196,6 +225,10 @@ export class HomePageComponent {
 
   toggleInfo(): void {
     this.showInfo.update((isVisible) => !isVisible);
+  }
+
+  toggleAdvancedOptions(): void {
+    this.showAdvancedOptions.update((isVisible) => !isVisible);
   }
 
   async createPoll(): Promise<void> {
