@@ -29,6 +29,9 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
           <header class="mb-3 rounded-lg border border-gray-200/80 bg-white p-4 shadow-sm shadow-gray-200/50">
             <p class="text-sm font-semibold text-gray-500">O que você vai levar?</p>
             <h1 class="mt-1 text-[1.9rem] font-semibold leading-tight tracking-normal text-gray-950">{{ poll()?.title }}</h1>
+            @if (poll()?.subtitle) {
+              <p class="mt-2 text-base font-medium leading-relaxed text-gray-600">{{ poll()?.subtitle }}</p>
+            }
 
             <div class="mt-5 flex items-center gap-2">
               <button
@@ -324,8 +327,13 @@ export class PollPageComponent implements OnInit, OnDestroy {
   }
 
   private shareText(): string {
-    const title = this.poll()?.title;
-    return title ? `Oi! Confirme aqui o que você vai levar: ${title}` : 'Oi! Confirme aqui o que você vai levar.';
+    const poll = this.poll();
+
+    if (!poll) {
+      return 'Oi! Confirme aqui o que você vai levar.';
+    }
+
+    return [`Oi! Confirme aqui o que você vai levar: ${poll.title}`, poll.subtitle].filter(Boolean).join('\n');
   }
 
   private openWhatsApp(text: string): void {
@@ -347,6 +355,7 @@ export class PollPageComponent implements OnInit, OnDestroy {
     const poll = this.poll();
     const lines = [
       poll?.title ?? 'Enquete',
+      ...(poll?.subtitle ? [poll.subtitle] : []),
       '',
       `${this.totalVotes()} confirmações`,
       '',

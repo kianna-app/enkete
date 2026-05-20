@@ -1,8 +1,11 @@
 create table if not exists polls (
   id uuid primary key default gen_random_uuid(),
   title text not null,
+  subtitle text,
   created_at timestamp with time zone not null default now()
 );
+
+alter table polls add column if not exists subtitle text;
 
 create table if not exists poll_items (
   id uuid primary key default gen_random_uuid(),

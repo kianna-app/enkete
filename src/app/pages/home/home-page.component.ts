@@ -30,6 +30,19 @@ import { SupabaseService } from '../../services/supabase.service';
             />
           </label>
 
+          <label class="mt-4 block">
+            <span class="text-sm font-semibold text-gray-700">Subtítulo opcional</span>
+            <input
+              class="mt-2 w-full rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
+              name="subtitle"
+              type="text"
+              autocomplete="off"
+              placeholder="Combine os itens da festa"
+              [ngModel]="subtitle()"
+              (ngModelChange)="subtitle.set($event)"
+            />
+          </label>
+
           <div class="mt-5">
             <div class="mb-2">
               <span class="text-sm font-semibold text-gray-700">Itens</span>
@@ -44,7 +57,7 @@ import { SupabaseService } from '../../services/supabase.service';
                     type="text"
                     autocomplete="off"
                     name="item-{{ item.id }}"
-                    placeholder="Paçoca"
+                    placeholder="Paçoca, Bolo, Suco"
                     [ngModel]="item.name"
                     (ngModelChange)="updateItem(item.id, $event)"
                   />
@@ -109,6 +122,7 @@ export class HomePageComponent {
   @ViewChildren('itemInput') private readonly itemInputs!: QueryList<ElementRef<HTMLInputElement>>;
 
   readonly title = signal('');
+  readonly subtitle = signal('');
   readonly items = signal([{ id: crypto.randomUUID(), name: '' }]);
   readonly loading = signal(false);
   readonly error = signal('');
@@ -139,7 +153,7 @@ export class HomePageComponent {
     this.error.set('');
 
     try {
-      const pollId = await this.supabase.createPoll(this.title().trim(), this.cleanItems());
+      const pollId = await this.supabase.createPoll(this.title().trim(), this.cleanItems(), this.cleanSubtitle());
       await this.router.navigate(['/poll', pollId]);
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'Não foi possível criar a enquete.');
@@ -150,7 +164,12 @@ export class HomePageComponent {
 
   private cleanItems(): string[] {
     return this.items()
-      .map((item) => item.name.trim())
+      .flatMap((item) => item.name.split(','))
+      .map((name) => name.trim())
       .filter(Boolean);
+  }
+
+  private cleanSubtitle(): string | null {
+    return this.subtitle().trim() || null;
   }
 }

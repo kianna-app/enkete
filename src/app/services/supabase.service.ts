@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 export interface Poll {
   id: string;
   title: string;
+  subtitle: string | null;
   created_at: string;
 }
 
@@ -47,12 +48,12 @@ export class SupabaseService {
     );
   });
 
-  async createPoll(title: string, itemNames: string[]): Promise<string> {
+  async createPoll(title: string, itemNames: string[], subtitle: string | null = null): Promise<string> {
     const client = this.getClient();
 
     const { data: poll, error: pollError } = await client
       .from('polls')
-      .insert({ title })
+      .insert({ title, subtitle })
       .select('id')
       .single();
 
