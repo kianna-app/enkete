@@ -9,11 +9,34 @@ import { SupabaseService } from '../../services/supabase.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="min-h-screen bg-[#f5f5f7] px-4 py-6 text-gray-950">
-      <section class="mx-auto flex min-h-[calc(100vh-3rem)] max-w-md flex-col justify-center">
+    <main class="flex min-h-screen flex-col bg-[#f5f5f7] px-4 py-6 text-gray-950">
+      <section class="mx-auto flex min-h-[calc(100vh-5.75rem)] w-full max-w-md flex-1 flex-col justify-center">
         <div class="mb-5 px-1">
-          <p class="text-sm font-semibold text-gray-500">Enkete</p>
-          <h1 class="mt-1 text-[2rem] font-semibold leading-tight tracking-normal text-gray-950">Crie um enquete</h1>
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold text-gray-500">Enkete</p>
+              <h1 class="mt-1 text-[2rem] font-semibold leading-tight tracking-normal text-gray-950">Crie um enquete</h1>
+            </div>
+            <button
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-gray-500 shadow-sm shadow-gray-200/60 transition active:scale-[0.98] active:bg-gray-100"
+              type="button"
+              aria-label="Sobre o Enkete"
+              [attr.aria-expanded]="showInfo()"
+              (click)="toggleInfo()"
+            >
+              <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+              </svg>
+            </button>
+          </div>
+
+          @if (showInfo()) {
+            <div class="mt-4 rounded-lg border border-gray-200/80 bg-white px-4 py-3 text-sm font-medium leading-relaxed text-gray-600 shadow-sm shadow-gray-200/50">
+              Enkete ajuda a combinar itens em grupo: você cria uma lista, compartilha o link e cada pessoa confirma o que vai levar.
+            </div>
+          }
         </div>
 
         <form class="rounded-lg border border-gray-200/80 bg-white p-4 shadow-sm shadow-gray-200/50" (ngSubmit)="createPoll()">
@@ -111,6 +134,10 @@ import { SupabaseService } from '../../services/supabase.service';
             {{ loading() ? 'Criando...' : 'Criar enquete' }}
           </button>
         </form>
+
+        <footer class="mt-6 text-center text-xs font-medium text-gray-500">
+          Copyright by Wagner Freiria
+        </footer>
       </section>
     </main>
   `
@@ -124,6 +151,7 @@ export class HomePageComponent {
   readonly title = signal('');
   readonly subtitle = signal('');
   readonly items = signal([{ id: crypto.randomUUID(), name: '' }]);
+  readonly showInfo = signal(false);
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -142,6 +170,10 @@ export class HomePageComponent {
 
   updateItem(id: string, name: string): void {
     this.items.update((items) => items.map((item) => (item.id === id ? { ...item, name } : item)));
+  }
+
+  toggleInfo(): void {
+    this.showInfo.update((isVisible) => !isVisible);
   }
 
   async createPoll(): Promise<void> {

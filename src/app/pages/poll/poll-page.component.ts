@@ -9,8 +9,8 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <main class="min-h-screen bg-[#f5f5f7] px-4 py-5 text-gray-950">
-      <section class="mx-auto max-w-md">
+    <main class="flex min-h-screen flex-col bg-[#f5f5f7] px-4 py-5 text-gray-950">
+      <section class="mx-auto w-full max-w-md flex-1">
         <a class="mb-4 inline-flex min-h-9 items-center gap-1 rounded-lg bg-gray-100 px-3 text-sm font-semibold text-gray-800 transition active:scale-[0.98] active:bg-gray-200" routerLink="/">
           <svg class="h-4 w-4 text-[#007aff]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M15 18l-6-6 6-6" />
@@ -148,6 +148,10 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
           </section>
         }
       </section>
+
+      <footer class="mx-auto mt-6 w-full max-w-md text-center text-xs font-medium text-gray-500">
+        Copyright by Wagner Freiria
+      </footer>
 
       @if (actionMessage()) {
         <div class="share-snackbar fixed inset-x-4 bottom-5 z-50 mx-auto max-w-md rounded-lg bg-gray-950 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg">
