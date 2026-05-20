@@ -2,10 +2,12 @@ create table if not exists polls (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   subtitle text,
+  allow_multiple_answers boolean not null default false,
   created_at timestamp with time zone not null default now()
 );
 
 alter table polls add column if not exists subtitle text;
+alter table polls add column if not exists allow_multiple_answers boolean not null default false;
 
 create table if not exists poll_items (
   id uuid primary key default gen_random_uuid(),

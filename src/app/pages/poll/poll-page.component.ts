@@ -15,7 +15,7 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
           <svg class="h-4 w-4 text-[#007aff]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M15 18l-6-6 6-6" />
           </svg>
-          Criar outra
+          Criar uma enquete
         </a>
 
         @if (loading()) {
@@ -75,14 +75,24 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
                     <label
                       class="flex min-h-[3.25rem] items-center gap-3 rounded-lg border border-transparent bg-gray-100 px-4 py-3 transition has-[:checked]:border-[#007aff] has-[:checked]:bg-[#007aff]/10"
                     >
-                      <input
-                        class="h-5 w-5 accent-[#007aff]"
-                        type="radio"
-                        name="poll-item"
-                        [value]="item.id"
-                        [ngModel]="selectedItemId()"
-                        (ngModelChange)="selectedItemId.set($event)"
-                      />
+                      @if (poll()?.allow_multiple_answers) {
+                        <input
+                          class="h-5 w-5 accent-[#007aff]"
+                          type="checkbox"
+                          name="poll-item-{{ item.id }}"
+                          [ngModel]="isItemSelected(item.id)"
+                          (ngModelChange)="toggleItem(item.id, $event)"
+                        />
+                      } @else {
+                        <input
+                          class="h-5 w-5 accent-[#007aff]"
+                          type="radio"
+                          name="poll-item"
+                          [value]="item.id"
+                          [ngModel]="selectedItemIds().at(0) || ''"
+                          (ngModelChange)="selectSingleItem($event)"
+                        />
+                      }
                       <span class="text-base font-semibold text-gray-900">{{ item.name }}</span>
                     </label>
                   }
@@ -188,7 +198,7 @@ export class PollPageComponent implements OnInit, OnDestroy {
 
   readonly poll = signal<Poll | null>(null);
   readonly items = signal<PollItem[]>([]);
-  readonly selectedItemId = signal('');
+  readonly selectedItemIds = signal<string[]>([]);
   readonly personName = signal('');
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -209,7 +219,7 @@ export class PollPageComponent implements OnInit, OnDestroy {
   });
   readonly totalVotes = computed(() => this.sortedResults().reduce((total, group) => total + group.names.length, 0));
   readonly canVote = computed(() => {
-    return this.selectedItemId().length > 0 && this.personName().trim().length > 0 && !this.alreadyVoted();
+    return this.selectedItemIds().length > 0 && this.personName().trim().length > 0 && !this.alreadyVoted();
   });
 
   async ngOnInit(): Promise<void> {
@@ -232,7 +242,7 @@ export class PollPageComponent implements OnInit, OnDestroy {
     this.voteError.set('');
 
     try {
-      await this.supabase.saveVote(pollId, this.selectedItemId(), this.personName().trim());
+      await this.supabase.saveVotes(pollId, this.selectedItemIds(), this.personName().trim());
       localStorage.setItem(this.votedKey(pollId), 'true');
       this.alreadyVoted.set(true);
     } catch (error) {
@@ -283,6 +293,24 @@ export class PollPageComponent implements OnInit, OnDestroy {
 
     this.openWhatsApp(summary);
     this.showActionMessage(copied ? 'Resumo copiado' : 'WhatsApp aberto');
+  }
+
+  selectSingleItem(itemId: string): void {
+    this.selectedItemIds.set(itemId ? [itemId] : []);
+  }
+
+  toggleItem(itemId: string, isSelected: boolean): void {
+    this.selectedItemIds.update((itemIds) => {
+      if (isSelected) {
+        return itemIds.includes(itemId) ? itemIds : [...itemIds, itemId];
+      }
+
+      return itemIds.filter((selectedItemId) => selectedItemId !== itemId);
+    });
+  }
+
+  isItemSelected(itemId: string): boolean {
+    return this.selectedItemIds().includes(itemId);
   }
 
   private async loadPoll(): Promise<void> {

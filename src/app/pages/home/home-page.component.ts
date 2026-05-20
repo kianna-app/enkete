@@ -66,6 +66,22 @@ import { SupabaseService } from '../../services/supabase.service';
             />
           </label>
 
+          <div class="mt-5 rounded-lg bg-gray-100 px-4 py-3">
+            <label class="flex items-start gap-3">
+              <input
+                class="mt-0.5 h-5 w-5 accent-[#007aff]"
+                name="allow-multiple-answers"
+                type="checkbox"
+                [ngModel]="allowMultipleAnswers()"
+                (ngModelChange)="allowMultipleAnswers.set($event)"
+              />
+              <span>
+                <span class="block text-sm font-semibold text-gray-800">Permitir múltiplas respostas</span>
+                <span class="mt-0.5 block text-sm font-medium leading-snug text-gray-500">Cada pessoa poderá escolher mais de um item.</span>
+              </span>
+            </label>
+          </div>
+
           <div class="mt-5">
             <div class="mb-2">
               <span class="text-sm font-semibold text-gray-700">Itens</span>
@@ -150,6 +166,7 @@ export class HomePageComponent {
 
   readonly title = signal('');
   readonly subtitle = signal('');
+  readonly allowMultipleAnswers = signal(false);
   readonly items = signal([{ id: crypto.randomUUID(), name: '' }]);
   readonly showInfo = signal(false);
   readonly loading = signal(false);
@@ -169,6 +186,11 @@ export class HomePageComponent {
   }
 
   updateItem(id: string, name: string): void {
+    if (name.includes(',')) {
+      this.expandItem(id, name);
+      return;
+    }
+
     this.items.update((items) => items.map((item) => (item.id === id ? { ...item, name } : item)));
   }
 
@@ -185,7 +207,12 @@ export class HomePageComponent {
     this.error.set('');
 
     try {
-      const pollId = await this.supabase.createPoll(this.title().trim(), this.cleanItems(), this.cleanSubtitle());
+      const pollId = await this.supabase.createPoll(
+        this.title().trim(),
+        this.cleanItems(),
+        this.cleanSubtitle(),
+        this.allowMultipleAnswers()
+      );
       await this.router.navigate(['/poll', pollId]);
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'Não foi possível criar a enquete.');
@@ -196,12 +223,45 @@ export class HomePageComponent {
 
   private cleanItems(): string[] {
     return this.items()
-      .flatMap((item) => item.name.split(','))
-      .map((name) => name.trim())
+      .map((item) => item.name.trim())
       .filter(Boolean);
   }
 
   private cleanSubtitle(): string | null {
     return this.subtitle().trim() || null;
+  }
+
+  private expandItem(id: string, value: string): void {
+    const hasTrailingComma = value.endsWith(',');
+    const names = value
+      .split(',')
+      .map((name) => name.trim())
+      .filter(Boolean);
+
+    if (hasTrailingComma) {
+      names.push('');
+    }
+
+    if (names.length === 0) {
+      this.items.update((items) => items.map((item) => (item.id === id ? { ...item, name: '' } : item)));
+      return;
+    }
+
+    let focusIndex = 0;
+
+    this.items.update((items) => {
+      const itemIndex = items.findIndex((item) => item.id === id);
+
+      if (itemIndex < 0) {
+        return items;
+      }
+
+      const expandedItems = names.map((name) => ({ id: crypto.randomUUID(), name }));
+      focusIndex = itemIndex + expandedItems.length - 1;
+
+      return [...items.slice(0, itemIndex), ...expandedItems, ...items.slice(itemIndex + 1)];
+    });
+
+    setTimeout(() => this.itemInputs.get(focusIndex)?.nativeElement.focus());
   }
 }

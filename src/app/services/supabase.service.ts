@@ -6,6 +6,7 @@ export interface Poll {
   id: string;
   title: string;
   subtitle: string | null;
+  allow_multiple_answers: boolean;
   created_at: string;
 }
 
@@ -48,12 +49,17 @@ export class SupabaseService {
     );
   });
 
-  async createPoll(title: string, itemNames: string[], subtitle: string | null = null): Promise<string> {
+  async createPoll(
+    title: string,
+    itemNames: string[],
+    subtitle: string | null = null,
+    allowMultipleAnswers = false
+  ): Promise<string> {
     const client = this.getClient();
 
     const { data: poll, error: pollError } = await client
       .from('polls')
-      .insert({ title, subtitle })
+      .insert({ title, subtitle, allow_multiple_answers: allowMultipleAnswers })
       .select('id')
       .single();
 
@@ -126,13 +132,19 @@ export class SupabaseService {
   }
 
   async saveVote(pollId: string, itemId: string, personName: string): Promise<void> {
+    await this.saveVotes(pollId, [itemId], personName);
+  }
+
+  async saveVotes(pollId: string, itemIds: string[], personName: string): Promise<void> {
     const client = this.getClient();
 
-    const { error } = await client.from('poll_answers').insert({
+    const answers = itemIds.map((itemId) => ({
       poll_id: pollId,
       poll_item_id: itemId,
       person_name: personName
-    });
+    }));
+
+    const { error } = await client.from('poll_answers').insert(answers);
 
     if (error) {
       throw error;
