@@ -9,81 +9,71 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <main class="min-h-screen bg-whatsapp-bg px-4 py-5">
+    <main class="min-h-screen bg-[#f5f5f7] px-4 py-5 text-gray-950">
       <section class="mx-auto max-w-md">
-        <a class="mb-4 inline-flex text-sm font-bold text-whatsapp-dark" routerLink="/">Criar outra enquete</a>
+        <a class="mb-4 inline-flex min-h-9 items-center gap-1 rounded-lg bg-gray-100 px-3 text-sm font-semibold text-gray-800 transition active:scale-[0.98] active:bg-gray-200" routerLink="/">
+          <svg class="h-4 w-4 text-[#007aff]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Criar outra
+        </a>
 
         @if (loading()) {
-          <div class="rounded-lg bg-white p-5 text-center font-semibold text-gray-700 shadow-sm">Carregando...</div>
+          <div class="rounded-lg border border-gray-200/80 bg-white p-5 text-center text-sm font-semibold text-gray-600 shadow-sm shadow-gray-200/50">Carregando...</div>
         } @else if (error()) {
-          <div class="rounded-lg bg-white p-5 shadow-sm">
-            <h1 class="text-xl font-bold text-gray-950">Não foi possível abrir a enquete</h1>
+          <div class="rounded-lg border border-gray-200/80 bg-white p-5 shadow-sm shadow-gray-200/50">
+            <h1 class="text-xl font-semibold text-gray-950">Não foi possível abrir a enquete</h1>
             <p class="mt-2 text-sm text-gray-600">{{ error() }}</p>
           </div>
         } @else if (poll()) {
-          <header class="mb-4 rounded-lg bg-white p-5 shadow-sm">
-            <p class="text-sm font-semibold text-whatsapp-dark">O que você vai levar?</p>
-            <h1 class="mt-2 text-3xl font-bold leading-tight text-gray-950">{{ poll()?.title }}</h1>
+          <header class="mb-3 rounded-lg border border-gray-200/80 bg-white p-4 shadow-sm shadow-gray-200/50">
+            <p class="text-sm font-semibold text-gray-500">O que você vai levar?</p>
+            <h1 class="mt-1 text-[1.9rem] font-semibold leading-tight tracking-normal text-gray-950">{{ poll()?.title }}</h1>
 
-            <div class="mt-5 grid grid-cols-2 gap-3">
+            <div class="mt-5 flex items-center gap-2">
               <button
-                class="rounded-lg bg-whatsapp px-3 py-3 text-sm font-bold text-white shadow-sm transition active:scale-[0.99]"
+                class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-gray-100 px-3 py-2.5 text-sm font-semibold text-gray-950 transition active:scale-[0.98] active:bg-gray-200"
                 type="button"
                 (click)="sharePoll()"
               >
-                Compartilhar
+                <svg class="h-4 w-4 text-[#007aff]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+                  <path d="M12 16V4" />
+                  <path d="M7 9l5-5 5 5" />
+                </svg>
+                Enquete
               </button>
               <button
-                class="rounded-lg bg-whatsapp-dark px-3 py-3 text-sm font-bold text-white shadow-sm transition active:scale-[0.99]"
+                class="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-gray-100 px-3 py-2.5 text-sm font-semibold text-gray-950 transition active:scale-[0.98] active:bg-gray-200"
                 type="button"
-                (click)="shareOnWhatsApp()"
+                (click)="shareResults()"
               >
-                WhatsApp
-              </button>
-              <button
-                class="rounded-lg bg-white px-3 py-3 text-sm font-bold text-whatsapp-dark ring-1 ring-whatsapp/30 transition active:scale-[0.99]"
-                type="button"
-                (click)="copyPollLink()"
-              >
-                Copiar link
-              </button>
-              <button
-                class="rounded-lg bg-white px-3 py-3 text-sm font-bold text-whatsapp-dark ring-1 ring-whatsapp/30 transition active:scale-[0.99]"
-                type="button"
-                (click)="copyResultsSummary()"
-              >
-                Copiar resumo
-              </button>
-              <button
-                class="col-span-2 rounded-lg bg-whatsapp-dark px-3 py-3 text-sm font-bold text-white shadow-sm transition active:scale-[0.99]"
-                type="button"
-                (click)="exportResults()"
-              >
-                Exportar resultado
+                <svg class="h-4 w-4 text-[#007aff]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 19V5" />
+                  <path d="M8 17V9" />
+                  <path d="M12 17V7" />
+                  <path d="M16 17v-5" />
+                  <path d="M20 19H4" />
+                </svg>
+                Resultado
               </button>
             </div>
-
-            @if (actionMessage()) {
-              <p class="mt-3 rounded-lg bg-whatsapp/15 px-4 py-3 text-sm font-bold text-whatsapp-dark">
-                {{ actionMessage() }}
-              </p>
-            }
           </header>
 
-          <section class="rounded-lg bg-white p-5 shadow-sm">
+          <section class="rounded-lg border border-gray-200/80 bg-white p-4 shadow-sm shadow-gray-200/50">
             @if (alreadyVoted()) {
-              <div class="rounded-lg bg-whatsapp/15 px-4 py-3 text-sm font-bold text-whatsapp-dark">
+              <div class="rounded-lg bg-[#007aff]/10 px-4 py-3 text-sm font-semibold text-[#0062cc]">
                 Você já confirmou sua participação nesta enquete.
               </div>
             } @else {
               <form (ngSubmit)="vote()">
-                <div class="space-y-3">
+                <div class="space-y-2.5">
                   @for (item of items(); track item.id) {
                     <label
-                      class="flex min-h-14 items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 transition has-[:checked]:border-whatsapp has-[:checked]:bg-whatsapp/10"
+                      class="flex min-h-[3.25rem] items-center gap-3 rounded-lg border border-transparent bg-gray-100 px-4 py-3 transition has-[:checked]:border-[#007aff] has-[:checked]:bg-[#007aff]/10"
                     >
                       <input
-                        class="h-5 w-5 accent-whatsapp"
+                        class="h-5 w-5 accent-[#007aff]"
                         type="radio"
                         name="poll-item"
                         [value]="item.id"
@@ -96,9 +86,9 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
                 </div>
 
                 <label class="mt-5 block">
-                  <span class="text-sm font-semibold text-gray-800">Seu nome</span>
+                  <span class="text-sm font-semibold text-gray-700">Seu nome</span>
                   <input
-                    class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-base outline-none transition focus:border-whatsapp focus:ring-4 focus:ring-whatsapp/20"
+                    class="mt-2 w-full rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
                     name="person-name"
                     type="text"
                     autocomplete="name"
@@ -113,7 +103,7 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
                 }
 
                 <button
-                  class="mt-5 w-full rounded-lg bg-whatsapp px-5 py-4 text-lg font-bold text-white shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  class="mt-5 flex min-h-12 w-full items-center justify-center rounded-lg bg-[#007aff] px-5 py-3 text-base font-semibold text-white shadow-sm shadow-[#007aff]/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
                   type="submit"
                   [disabled]="!canVote() || saving()"
                 >
@@ -123,27 +113,27 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
             }
           </section>
 
-          <section class="mt-4 rounded-lg bg-white p-5 shadow-sm">
+          <section class="mt-3 rounded-lg border border-gray-200/80 bg-white p-4 shadow-sm shadow-gray-200/50">
             <div class="mb-4 flex items-center justify-between">
               <div>
-                <h2 class="text-xl font-bold text-gray-950">Resultado</h2>
+                <h2 class="text-xl font-semibold text-gray-950">Resultado</h2>
                 <p class="text-sm font-medium text-gray-500">{{ totalVotes() }} confirmações</p>
               </div>
-              <button class="text-sm font-bold text-whatsapp-dark" type="button" (click)="refreshAnswers()">Atualizar</button>
+              <button class="inline-flex min-h-9 items-center rounded-lg bg-gray-100 px-3 text-sm font-semibold text-gray-800 transition active:scale-[0.98] active:bg-gray-200" type="button" (click)="refreshAnswers()">Atualizar</button>
             </div>
 
-            <div class="space-y-4">
+            <div class="space-y-2.5">
               @for (group of sortedResults(); track group.item.id) {
-                <div class="rounded-lg bg-gray-50 p-4">
+                <div class="rounded-lg bg-gray-100 p-4">
                   <div class="flex items-center justify-between gap-3">
-                    <h3 class="font-bold text-gray-950">{{ group.item.name }}</h3>
-                    <span class="rounded-lg bg-whatsapp/15 px-3 py-1 text-sm font-bold text-whatsapp-dark">{{ group.names.length }}</span>
+                    <h3 class="font-semibold text-gray-950">{{ group.item.name }}</h3>
+                    <span class="min-w-8 rounded-full bg-white px-2.5 py-1 text-center text-sm font-semibold text-gray-800">{{ group.names.length }}</span>
                   </div>
 
                   @if (group.names.length > 0) {
-                    <ul class="mt-3 space-y-2">
+                    <ul class="mt-3 space-y-1.5">
                       @for (name of group.names; track name + $index) {
-                        <li class="text-sm font-medium text-gray-700">- {{ name }}</li>
+                        <li class="text-sm font-medium text-gray-600">{{ name }}</li>
                       }
                     </ul>
                   } @else {
@@ -155,13 +145,39 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
           </section>
         }
       </section>
+
+      @if (actionMessage()) {
+        <div class="share-snackbar fixed inset-x-4 bottom-5 z-50 mx-auto max-w-md rounded-lg bg-gray-950 px-4 py-3 text-center text-sm font-semibold text-white shadow-lg">
+          {{ actionMessage() }}
+        </div>
+      }
     </main>
-  `
+  `,
+  styles: [
+    `
+      .share-snackbar {
+        animation: share-snackbar-in 180ms ease-out;
+      }
+
+      @keyframes share-snackbar-in {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `
+  ]
 })
 export class PollPageComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly supabase = inject(SupabaseService);
   private unsubscribe: (() => void) | undefined;
+  private actionMessageTimeout: ReturnType<typeof setTimeout> | undefined;
 
   readonly poll = signal<Poll | null>(null);
   readonly items = signal<PollItem[]>([]);
@@ -195,6 +211,7 @@ export class PollPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.unsubscribe?.();
+    clearTimeout(this.actionMessageTimeout);
   }
 
   async vote(): Promise<void> {
@@ -227,82 +244,38 @@ export class PollPageComponent implements OnInit, OnDestroy {
   }
 
   async sharePoll(): Promise<void> {
-    const poll = this.poll();
     const url = window.location.href;
+    const text = `${this.shareText()}\n${url}`;
+    let copied = false;
 
-    this.actionMessage.set('');
+    this.clearActionMessage();
 
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: poll?.title ?? 'Enquete',
-          text: this.shareText(),
-          url
-        });
-        return;
-      }
-
       await this.copyText(url);
-      this.actionMessage.set('Link copiado.');
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return;
-      }
-
-      this.actionMessage.set('Não foi possível compartilhar. Copie o link pela barra do navegador.');
-    }
-  }
-
-  async shareOnWhatsApp(): Promise<void> {
-    window.open(`https://wa.me/?text=${encodeURIComponent(`${this.shareText()}\n${window.location.href}`)}`, '_blank');
-  }
-
-  async copyPollLink(): Promise<void> {
-    try {
-      await this.copyText(window.location.href);
-      this.actionMessage.set('Link copiado.');
+      copied = true;
     } catch {
-      this.actionMessage.set('Não foi possível copiar. Copie o link pela barra do navegador.');
+      copied = false;
     }
+
+    this.openWhatsApp(text);
+    this.showActionMessage(copied ? 'Link copiado' : 'WhatsApp aberto');
   }
 
-  async copyResultsSummary(): Promise<void> {
+  async shareResults(): Promise<void> {
+    const summary = this.resultsSummary();
+    let copied = false;
+
+    this.clearActionMessage();
+
     try {
-      await this.copyText(this.resultsSummary());
-      this.actionMessage.set('Resumo copiado.');
+      await this.copyText(summary);
+      copied = true;
     } catch {
-      this.actionMessage.set('Não foi possível copiar o resumo.');
-    }
-  }
-
-  exportResults(): void {
-    const poll = this.poll();
-
-    if (!poll) {
-      return;
+      copied = false;
     }
 
-    const summaryRows = [
-      ['Resumo'],
-      ['Item', 'Total de votos', 'Nomes'],
-      ...this.sortedResults().map((group) => [group.item.name, String(group.names.length), group.names.join(', ')])
-    ];
-    const voteRows = [
-      [''],
-      ['Votos realizados'],
-      ['Item', 'Nome'],
-      ...this.sortedResults().flatMap((group) => group.names.map((name) => [group.item.name, name]))
-    ];
-    const rows = [...summaryRows, ...voteRows];
-    const csv = rows.map((row) => row.map((value) => this.escapeCsvValue(value)).join(';')).join('\n');
-    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
-    const link = document.createElement('a');
-
-    link.href = URL.createObjectURL(blob);
-    link.download = `${this.slugify(poll.title)}-resultados.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    this.actionMessage.set('Resultado exportado.');
+    this.openWhatsApp(summary);
+    this.showActionMessage(copied ? 'Resumo copiado' : 'WhatsApp aberto');
   }
 
   private async loadPoll(): Promise<void> {
@@ -355,6 +328,21 @@ export class PollPageComponent implements OnInit, OnDestroy {
     return title ? `Oi! Confirme aqui o que você vai levar: ${title}` : 'Oi! Confirme aqui o que você vai levar.';
   }
 
+  private openWhatsApp(text: string): void {
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  private showActionMessage(message: string): void {
+    clearTimeout(this.actionMessageTimeout);
+    this.actionMessage.set(message);
+    this.actionMessageTimeout = setTimeout(() => this.actionMessage.set(''), 2200);
+  }
+
+  private clearActionMessage(): void {
+    clearTimeout(this.actionMessageTimeout);
+    this.actionMessage.set('');
+  }
+
   private resultsSummary(): string {
     const poll = this.poll();
     const lines = [
@@ -372,18 +360,4 @@ export class PollPageComponent implements OnInit, OnDestroy {
     return lines.join('\n').trim();
   }
 
-  private escapeCsvValue(value: string): string {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-
-  private slugify(value: string): string {
-    const slug = value
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-
-    return slug || 'enquete';
-  }
 }

@@ -1,0 +1,31 @@
+
+# Prioridade absoluta
+
+
+
+# Alterações:
+
+Na tela de criar uma enquete:
+
+Mudar o título da página, para "Crie um enquete"
+Mova o botão "Adicionar" para baixo do input de texto dos itens. Adicione um ícone de+.
+
+Ao clicar em "Adicionar" mantenha o focus no próximo input que surgiu.
+Troque o icone do botão de "Remover" com um ícone de lixeira ao lado de cada input de item.
+
+Na tela O que você vai levar, apenas 2 botões
+"Compartilhar enquete"
+    Ações: Copiar o endereço e abrir o WhatsApp para compartilhar, ação que já acontece quando clicar em WhatsApp
+
+"Compartilhar resultado"
+    Ações: Copiar o resumo e abrir tela do WhatsApp enviando o resultado copiado.
+
+
+## IMPORTANTE
+
+O foco é:
+- entregar rápido;
+- UX extremamente simples;
+- experiência excelente no celular;
+- código simples;
+- MVP funcional.

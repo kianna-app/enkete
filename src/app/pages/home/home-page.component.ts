@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, QueryList, ViewChildren, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
@@ -9,18 +9,18 @@ import { SupabaseService } from '../../services/supabase.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <main class="min-h-screen bg-whatsapp-bg px-4 py-6">
+    <main class="min-h-screen bg-[#f5f5f7] px-4 py-6 text-gray-950">
       <section class="mx-auto flex min-h-[calc(100vh-3rem)] max-w-md flex-col justify-center">
-        <div class="mb-5">
-          <p class="text-sm font-semibold text-whatsapp-dark">Enkete</p>
-          <h1 class="mt-2 text-3xl font-bold leading-tight text-gray-950">Crie uma enquete simples</h1>
+        <div class="mb-5 px-1">
+          <p class="text-sm font-semibold text-gray-500">Enkete</p>
+          <h1 class="mt-1 text-[2rem] font-semibold leading-tight tracking-normal text-gray-950">Crie um enquete</h1>
         </div>
 
-        <form class="rounded-lg bg-white p-5 shadow-sm" (ngSubmit)="createPoll()">
+        <form class="rounded-lg border border-gray-200/80 bg-white p-4 shadow-sm shadow-gray-200/50" (ngSubmit)="createPoll()">
           <label class="block">
-            <span class="text-sm font-semibold text-gray-800">Título da enquete</span>
+            <span class="text-sm font-semibold text-gray-700">Título da enquete</span>
             <input
-              class="mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-base outline-none transition focus:border-whatsapp focus:ring-4 focus:ring-whatsapp/20"
+              class="mt-2 w-full rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
               name="title"
               type="text"
               autocomplete="off"
@@ -31,22 +31,16 @@ import { SupabaseService } from '../../services/supabase.service';
           </label>
 
           <div class="mt-5">
-            <div class="mb-2 flex items-center justify-between">
-              <span class="text-sm font-semibold text-gray-800">Itens</span>
-              <button
-                class="rounded-lg bg-whatsapp/15 px-4 py-2 text-sm font-bold text-whatsapp-dark"
-                type="button"
-                (click)="addItem()"
-              >
-                Adicionar
-              </button>
+            <div class="mb-2">
+              <span class="text-sm font-semibold text-gray-700">Itens</span>
             </div>
 
-            <div class="space-y-3">
+            <div class="space-y-2.5">
               @for (item of items(); track item.id) {
                 <div class="flex gap-2">
                   <input
-                    class="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-4 py-3 text-base outline-none transition focus:border-whatsapp focus:ring-4 focus:ring-whatsapp/20"
+                    #itemInput
+                    class="min-w-0 flex-1 rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
                     type="text"
                     autocomplete="off"
                     name="item-{{ item.id }}"
@@ -55,17 +49,35 @@ import { SupabaseService } from '../../services/supabase.service';
                     (ngModelChange)="updateItem(item.id, $event)"
                   />
                   <button
-                    class="h-12 w-12 shrink-0 rounded-lg bg-gray-100 text-xl font-bold text-gray-500 disabled:opacity-40"
+                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 transition active:scale-[0.98] active:bg-gray-200 disabled:opacity-35"
                     type="button"
                     aria-label="Remover item"
                     [disabled]="items().length === 1"
                     (click)="removeItem(item.id)"
                   >
-                    -
+                    <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="M6 6l1 15h10l1-15" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                    </svg>
                   </button>
                 </div>
               }
             </div>
+
+            <button
+              class="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-950 transition active:scale-[0.98] active:bg-gray-200"
+              type="button"
+              (click)="addItem()"
+            >
+              <svg class="h-4 w-4 text-[#007aff]" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                <path d="M12 5v14" />
+                <path d="M5 12h14" />
+              </svg>
+              Adicionar
+            </button>
           </div>
 
           @if (error()) {
@@ -73,13 +85,13 @@ import { SupabaseService } from '../../services/supabase.service';
           }
 
           @if (!supabase.hasConfig()) {
-            <p class="mt-4 rounded-lg bg-yellow-50 px-4 py-3 text-sm font-medium text-yellow-800">
+            <p class="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
               Configure SUPABASE_URL e SUPABASE_ANON_KEY antes de criar enquetes.
             </p>
           }
 
           <button
-            class="mt-5 w-full rounded-lg bg-whatsapp px-5 py-4 text-lg font-bold text-white shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            class="mt-5 flex min-h-12 w-full items-center justify-center rounded-lg bg-[#007aff] px-5 py-3 text-base font-semibold text-white shadow-sm shadow-[#007aff]/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
             type="submit"
             [disabled]="!canSubmit() || loading()"
           >
@@ -94,6 +106,8 @@ export class HomePageComponent {
   private readonly router = inject(Router);
   readonly supabase = inject(SupabaseService);
 
+  @ViewChildren('itemInput') private readonly itemInputs!: QueryList<ElementRef<HTMLInputElement>>;
+
   readonly title = signal('');
   readonly items = signal([{ id: crypto.randomUUID(), name: '' }]);
   readonly loading = signal(false);
@@ -105,6 +119,7 @@ export class HomePageComponent {
 
   addItem(): void {
     this.items.update((items) => [...items, { id: crypto.randomUUID(), name: '' }]);
+    setTimeout(() => this.itemInputs.last?.nativeElement.focus());
   }
 
   removeItem(id: string): void {
