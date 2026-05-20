@@ -1,0 +1,351 @@
+# TASK — MVP Enquete Coletiva (Angular + Supabase)
+
+## Objetivo
+
+Criar uma aplicação web extremamente simples e mobile-first para organizar pequenas enquetes compartilháveis.
+
+Exemplo:
+- Festa junina
+- Churrasco
+- Café coletivo
+- Quem vai levar o quê
+
+Usuário acessa o link:
+- escolhe um item;
+- informa o nome;
+- confirma.
+
+Sistema:
+- contabiliza quantidade;
+- lista os nomes por item.
+
+---
+
+# Stack obrigatória
+
+## Frontend
+- Angular
+- Angular Standalone
+- Angular Signals
+- TailwindCSS
+
+## Backend
+- Supabase
+
+## Deploy
+- Vercel
+
+## Requisitos técnicos
+- Código simples
+- Pouca abstração
+- Sem overengineering
+- Sem clean architecture complexa
+- Sem autenticação
+- Sem permissões
+- Foco total em velocidade de desenvolvimento
+
+---
+
+# UX/UI
+
+## Objetivo visual
+Interface:
+- minimalista;
+- extremamente simples;
+- intuitiva;
+- rápida;
+- 100% mobile-first.
+
+## Estilo
+Inspirar nas cores do WhatsApp.
+
+## Paleta
+- Verde principal: #25D366
+- Verde escuro: #128C7E
+- Fundo claro: #F0F2F5
+- Branco: #FFFFFF
+
+## Componentes
+- cantos arredondados;
+- botões grandes;
+- fontes legíveis;
+- espaçamento confortável;
+- foco em toque mobile.
+
+---
+
+# Funcionalidades MVP
+
+# 1. Criar enquete
+
+Tela simples contendo:
+
+## Campos
+- título da enquete
+- lista dinâmica de itens
+
+## Exemplo
+
+Festa Junina da Família
+
+[ Milho ]
+[ Refrigerante ]
+[ Paçoca ]
+
+## Ações
+- adicionar item
+- remover item
+- criar enquete
+
+---
+
+# 2. Gerar link compartilhável
+
+Após criar:
+- gerar ID automático;
+- navegar para rota pública.
+
+Exemplo:
+
+/poll/abc123
+
+---
+
+# 3. Participar da enquete
+
+Tela pública extremamente simples.
+
+## Fluxo
+
+### Cabeçalho
+O que você vai levar?
+
+### Lista de opções
+( ) Paçoca
+( ) Refrigerante
+( ) Milho
+
+### Campo
+Seu nome
+
+### Botão
+Confirmar
+
+---
+
+# 4. Resultado em tempo real
+
+Abaixo da votação mostrar:
+
+Paçoca (2)
+- João
+- Maria
+
+---
+
+# 5. Evitar duplicidade simples
+
+Usar:
+- localStorage
+
+Salvar:
+poll_voted_<pollId>
+
+Se já votou:
+- bloquear novo envio;
+- apenas exibir resultado.
+
+Não precisa segurança avançada.
+
+---
+
+# Estrutura do banco — Supabase
+
+## Tabela: polls
+
+id uuid primary key
+title text
+created_at timestamp
+
+---
+
+## Tabela: poll_items
+
+id uuid primary key
+poll_id uuid
+name text
+created_at timestamp
+
+---
+
+## Tabela: poll_answers
+
+id uuid primary key
+poll_id uuid
+poll_item_id uuid
+person_name text
+created_at timestamp
+
+---
+
+# Regras Supabase
+
+## Habilitar:
+- Row Level Security OFF inicialmente
+
+Objetivo:
+- velocidade de implementação
+
+---
+
+# Estrutura Angular
+
+## Páginas
+
+### HomePage
+Criar enquete
+
+### PollPage
+Participar + visualizar resultados
+
+---
+
+# Componentização
+
+Manter mínimo possível.
+
+Pode inicialmente:
+- fazer páginas grandes;
+- pouca separação;
+- foco em entrega rápida.
+
+---
+
+# Serviços
+
+## SupabaseService
+Responsável por:
+- criar enquete;
+- buscar enquete;
+- salvar voto;
+- listar respostas.
+
+---
+
+# Rotas
+
+/
+/poll/:id
+
+---
+
+# Requisitos mobile
+
+## Obrigatório
+- funcionar perfeitamente em celular;
+- largura máxima ~500px;
+- centralizado;
+- botões grandes;
+- inputs altos;
+- sem tabelas.
+
+---
+
+# Requisitos de performance
+
+- carregamento rápido;
+- poucas dependências;
+- sem SSR;
+- sem NgRx;
+- sem libs pesadas.
+
+---
+
+# Realtime
+
+Usar realtime do Supabase apenas para:
+- atualizar lista de participantes automaticamente.
+
+Sem complexidade adicional.
+
+---
+
+# Estrutura visual esperada
+
+## Criar enquete
+
++----------------------------------+
+| Festa Junina                     |
+|                                  |
+| [ Nome do item ]                 |
+|                                  |
+| [+ Adicionar item ]              |
+|                                  |
+| [ Criar enquete ]                |
++----------------------------------+
+
+---
+
+## Participar
+
++----------------------------------+
+| O que você vai levar?            |
+|                                  |
+| ( ) Paçoca                       |
+| ( ) Milho                        |
+| ( ) Refrigerante                 |
+|                                  |
+| [ Seu nome ]                     |
+|                                  |
+| [ Confirmar ]                    |
+|                                  |
+| -------- RESULTADO --------      |
+|                                  |
+| Paçoca (2)                       |
+| - João                           |
+| - Maria                          |
++----------------------------------+
+
+---
+
+# Critérios de aceitação
+
+## Deve ser possível:
+- criar enquete;
+- adicionar itens;
+- compartilhar link;
+- votar;
+- visualizar resultados;
+- atualizar resultados em tempo real;
+- impedir múltiplos votos simples via localStorage.
+
+---
+
+# NÃO fazer agora
+
+- login;
+- permissões;
+- admin;
+- edição;
+- exclusão;
+- upload;
+- tema escuro;
+- internacionalização;
+- testes;
+- arquitetura complexa;
+- validações avançadas.
+
+---
+
+# Prioridade absoluta
+
+## IMPORTANTE
+
+O foco é:
+- entregar rápido;
+- UX extremamente simples;
+- experiência excelente no celular;
+- código simples;
+- MVP funcional.
+
+Refatoração virá depois.
