@@ -153,7 +153,32 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
               </div>
             } @else {
               <form (ngSubmit)="vote()">
-                <div class="space-y-2.5">
+                <label class="block">
+                  <span class="text-sm font-semibold text-gray-700">Seu nome</span>
+                  <input
+                    class="mt-2 w-full rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
+                    name="person-name"
+                    type="text"
+                    autocomplete="name"
+                    placeholder="João"
+                    [ngModel]="personName()"
+                    (ngModelChange)="personName.set($event)"
+                  />
+                </label>
+
+                <button
+                  class="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg bg-[#007aff] px-5 py-3 text-base font-semibold text-white shadow-sm shadow-[#007aff]/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+                  type="submit"
+                  [disabled]="!canVote() || saving()"
+                >
+                  {{ saving() ? 'Confirmando...' : 'Confirmar' }}
+                </button>
+
+                @if (voteError()) {
+                  <p class="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{{ voteError() }}</p>
+                }
+
+                <div class="mt-5 space-y-2.5">
                   @for (item of items(); track item.id) {
                     <label
                       class="flex min-h-[3.25rem] items-center gap-3 rounded-lg border border-transparent bg-gray-100 px-4 py-3 transition has-[:checked]:border-[#007aff] has-[:checked]:bg-[#007aff]/10"
@@ -180,31 +205,6 @@ import { Poll, PollItem, SupabaseService } from '../../services/supabase.service
                     </label>
                   }
                 </div>
-
-                <label class="mt-5 block">
-                  <span class="text-sm font-semibold text-gray-700">Seu nome</span>
-                  <input
-                    class="mt-2 w-full rounded-lg border border-transparent bg-gray-100 px-4 py-3 text-base outline-none transition placeholder:text-gray-400 focus:border-[#007aff] focus:bg-white focus:ring-4 focus:ring-[#007aff]/10"
-                    name="person-name"
-                    type="text"
-                    autocomplete="name"
-                    placeholder="João"
-                    [ngModel]="personName()"
-                    (ngModelChange)="personName.set($event)"
-                  />
-                </label>
-
-                @if (voteError()) {
-                  <p class="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{{ voteError() }}</p>
-                }
-
-                <button
-                  class="mt-5 flex min-h-12 w-full items-center justify-center rounded-lg bg-[#007aff] px-5 py-3 text-base font-semibold text-white shadow-sm shadow-[#007aff]/20 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
-                  type="submit"
-                  [disabled]="!canVote() || saving()"
-                >
-                  {{ saving() ? 'Confirmando...' : 'Confirmar' }}
-                </button>
               </form>
             }
           </section>
